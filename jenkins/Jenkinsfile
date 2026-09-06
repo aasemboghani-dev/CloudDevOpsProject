@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        AWS_REGION = 'ap-south-1'
+        ECR_REPO = '090597375004.dkr.ecr.ap-south-1.amazonaws.com/cloud-devops-app'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -20,6 +25,21 @@ pipeline {
         stage('Docker Test') {
             steps {
                 sh 'docker images cloud-devops-app'
+            }
+        }
+
+        stage('ECR Login') {
+            steps {
+                sh 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO'
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                sh '''
+                    docker tag cloud-devops-app:latest $ECR_REPO:latest
+                    docker push $ECR_REPO:latest
+                '''
             }
         }
     }
