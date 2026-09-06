@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: cloud-devops-app
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: cloud-devops-app
@@ -15,5 +15,21 @@ spec:
       containers:
         - name: cloud-devops-app
           image: 090597375004.dkr.ecr.ap-south-1.amazonaws.com/cloud-devops-app:latest
+          envFrom:
+            - secretRef:
+                name: rds-credentials
           ports:
             - containerPort: 5000
+		          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 20
