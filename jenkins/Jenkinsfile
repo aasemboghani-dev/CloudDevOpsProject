@@ -33,7 +33,10 @@ pipeline {
 
         stage('ECR Login') {
             steps {
-                sh 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO'
+                sh '''
+                    aws ecr get-login-password --region $AWS_REGION | \
+                    docker login --username AWS --password-stdin $ECR_REPO
+                '''
             }
         }
 
@@ -49,20 +52,28 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 sh '''
-                    aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER
-                    kubectl set image deployment/cloud-devops-app cloud-devops-app=$ECR_REPO:$IMAGE_TAG
+                    aws eks update-kubeconfig \
+                        --region $AWS_REGION \
+                        --name $EKS_CLUSTER
+
+                    kubectl apply -f kubernetes/deployment.yaml
+
+                    kubectl set image deployment/cloud-devops-app \
+                        cloud-devops-app=$ECR_REPO:$IMAGE_TAG
+
                     kubectl rollout status deployment/cloud-devops-app
                 '''
             }
         }
-  stage('Application Test') {
-    steps {
-        sh '''
-            kubectl rollout status deployment/cloud-devops-app
-            kubectl get pods
-            kubectl get service cloud-devops-service
-        '''
+
+        stage('Application Test') {
+            steps {
+                sh '''
+                    kubectl get deployment cloud-devops-app
+                    kubectl get pods -o wide
+                    kubectl get service cloud-devops-service
+                '''
+            }
+        }
     }
-}
-  }
 }
