@@ -2,32 +2,46 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cloud-devops-app
+
 spec:
-  replicas: 1
+  replicas: 2
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+
   selector:
     matchLabels:
       app: cloud-devops-app
+
   template:
     metadata:
       labels:
         app: cloud-devops-app
+
     spec:
-	      topologySpreadConstraints:
+      topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
               app: cloud-devops-app
+
       containers:
         - name: cloud-devops-app
           image: 090597375004.dkr.ecr.ap-south-1.amazonaws.com/cloud-devops-app:latest
+
           envFrom:
             - secretRef:
                 name: rds-credentials
+
           ports:
             - containerPort: 5000
-		          readinessProbe:
+
+          readinessProbe:
             httpGet:
               path: /health
               port: 5000
