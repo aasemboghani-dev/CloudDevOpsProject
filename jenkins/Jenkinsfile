@@ -55,5 +55,14 @@ pipeline {
                 '''
             }
         }
+  stage('Application Test') {
+    steps {
+        sh '''
+            kubectl rollout status deployment/cloud-devops-app
+            kubectl get pods
+            kubectl get service cloud-devops-service
+        '''
     }
+}
+  }
 }
