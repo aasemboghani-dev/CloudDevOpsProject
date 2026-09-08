@@ -17,11 +17,16 @@ resource "aws_security_group" "rds" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "MySQL from EC2"
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ec2.id]
+    description = "MySQL from EC2 and EKS"
+
+    from_port = 3306
+    to_port   = 3306
+    protocol  = "tcp"
+
+    security_groups = [
+      aws_security_group.ec2.id,
+      "sg-0714bec2110d6eeb3"
+    ]
   }
 
   egress {
