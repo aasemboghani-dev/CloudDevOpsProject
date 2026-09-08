@@ -71,7 +71,10 @@ pipeline {
                 sh '''
                     set -e
 
+                    echo "================================="
                     echo "Checking Kubernetes deployment..."
+                    echo "================================="
+
                     kubectl rollout status deployment/cloud-devops-app
 
                     echo "Checking pods..."
@@ -80,7 +83,9 @@ pipeline {
                     echo "Checking service..."
                     kubectl get service cloud-devops-service
 
+                    echo "================================="
                     echo "Testing application health..."
+                    echo "================================="
 
                     POD=$(kubectl get pods \
                         -l app=cloud-devops-app \
@@ -90,6 +95,23 @@ pipeline {
                         "import urllib.request; print(urllib.request.urlopen('http://cloud-devops-service/health').read().decode())"
 
                     echo "Application health check PASSED"
+
+                    echo "================================="
+                    echo "Testing RDS database connection..."
+                    echo "================================="
+
+                    DB_RESPONSE=$(kubectl exec "$POD" -- python -c \
+                        "from app import app; r=app.test_client().get('/db-test'); print(r.status_code); print(r.data.decode())")
+
+                    echo "$DB_RESPONSE"
+
+                    echo "$DB_RESPONSE" | grep -q "RDS DATABASE CONNECTION OK"
+
+                    echo "RDS database connection test PASSED"
+
+                    echo "================================="
+                    echo "ALL APPLICATION TESTS PASSED"
+                    echo "================================="
                 '''
             }
         }
