@@ -66,26 +66,30 @@ pipeline {
             }
         }
 
-       stage('Application Test') {
-    steps {
-        sh '''
-            echo "Checking Kubernetes deployment..."
-            kubectl rollout status deployment/cloud-devops-app
+        stage('Application Test') {
+            steps {
+                sh '''
+                    set -e
 
-            echo "Checking pods..."
-            kubectl get pods -l app=cloud-devops-app
+                    echo "Checking Kubernetes deployment..."
+                    kubectl rollout status deployment/cloud-devops-app
 
-            echo "Checking service..."
-            kubectl get service cloud-devops-service
+                    echo "Checking pods..."
+                    kubectl get pods -l app=cloud-devops-app
 
-            echo "Testing application health..."
-            kubectl run health-test-$BUILD_NUMBER \
-                --rm \
-                --restart=Never \
-                --image=curlimages/curl:8.10.1 \
-                -- curl -f http://cloud-devops-service/health
+                    echo "Checking service..."
+                    kubectl get service cloud-devops-service
 
-            echo "Application health check PASSED"
+                    echo "Testing application health..."
+
+                    POD=$(kubectl get pods \
+                        -l app=cloud-devops-app \
+                        -o jsonpath='{.items[0].metadata.name}')
+
+                    kubectl exec "$POD" -- python -c \
+                        "import urllib.request; print(urllib.request.urlopen('http://cloud-devops-service/health').read().decode())"
+
+                    echo "Application health check PASSED"
                 '''
             }
         }
