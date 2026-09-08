@@ -1,27 +1,20 @@
-pipeline {
-    agent any
+terraform {
+  backend "s3" {
+    bucket       = "cloud-devops-tfstate-090597375004"
+    key          = "terraform.tfstate"
+    region       = "ap-south-1"
+    encrypt      = true
+    use_lockfile = true
+  }
 
-    stages {
-
-        stage('Checkout') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/aasemboghani-dev/CloudDevOpsProject.git'
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                dir('application') {
-                    sh 'docker build -t cloud-devops-app:latest .'
-                }
-            }
-        }
-
-        stage('Docker Test') {
-            steps {
-                sh 'docker images cloud-devops-app'
-            }
-        }
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
     }
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
 }
